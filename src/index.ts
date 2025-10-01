@@ -13,7 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { hello } from './example-module';
+function postToX(entry: { images: any; trailingText: any }) {
+  // スクリプトプロパティからアクセストークンを取得
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const bearerToken = scriptProperties.getProperty('bearerToken');
 
-console.log(hello());
+  if (!bearerToken) {
+    throw new Error('bearerToken is not set in script properties.');
+  }
+
+  const url = 'https://api.twitter.com/2/tweets';
+  const payload = {
+    text: 'Test',
+  };
+
+  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'post',
+    headers: {
+      Authorization: 'Bearer ' + bearerToken,
+    },
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+
+  const response = UrlFetchApp.fetch(url, params);
+  const responseCode = response.getResponseCode();
+  const responseBody = response.getContentText();
+
+  if (responseCode === 200) {
+    const jsonResponse = JSON.parse(responseBody);
+    return jsonResponse; // Return the response from the API
+  } else {
+    Logger.log('Error posting to X: ' + responseBody);
+    throw new Error('Failed to post entry to X: ' + responseBody);
+  }
+}
